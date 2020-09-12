@@ -175,7 +175,7 @@ export class Star {
   }
 
   averageTag() {
-    return listSum(this.talks.map((v, i) => v * i)) / listSum(this.talks);
+    return listSum(this.talks.map((v, i) => v * i)) / (listSum(this.talks) + 0.01);
   }
 
   maxTag() {
@@ -245,10 +245,12 @@ export class Star {
     let migration = delta * factor * tagTypeMultiplier * migrationSpeed;
     migration *= Math.min(migration > 0 ? this.pop : that.pop, 1);
 
+    let scaledMigration = migration/(this.pop+0.01);
+
     if(migration>0)
-      this.has[tagNamed.emigration] += migration/this.pop;
+      this.has[tagNamed.emigration] += scaledMigration;
     else
-      this.has[tagNamed.unemployment] -= migration/this.pop;
+      this.has[tagNamed.unemployment] -= scaledMigration;
 
     let sizeAdjust = (that.pop / (this.pop + 0.1)) ** 0.5;
 
@@ -287,8 +289,13 @@ export class Star {
 
     console.assert(tag<36);
 
+
     let change = (this.makes[tag] - this.has[tag]) * dt * 2;
     this.has[tag] += change;
+    if(tag == tagNamed.epidemy){
+      this.has[tag] -= this.has[tagNamed.medicine]*dt;
+    }
+
     this.talks[tag] += FR() * 0.1 * dt;
     this.balanceTalks();
 
@@ -310,16 +317,17 @@ export class Star {
       dt *
       0.02 *
       this.has[tag] *
-      (0.1 + this.pop) *
       (this.has[tag] < 0 ? negativeTagEffect[tag] : positiveTagEffect[tag]);
 
-    if(growth<0)
-      this.grit += dt;
-    
-    if(growth<0)
+    if(growth<0){
+      this.grit += dt * growth * 10;
       growth /= 1 + this.grit*0.5;
+      this.has[tagsNumber - 1 - R(6)] += growth * FR()
+    }
 
     this.grit *= 1 - dt*0.01 * this.pop;
+
+    growth *= (0.1 + this.pop);
 
     this.log({
       tag,

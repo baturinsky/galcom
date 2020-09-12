@@ -208,7 +208,7 @@ war`.split("\n");
           return this.pop;
       }
       averageTag() {
-          return listSum(this.talks.map((v, i) => v * i)) / listSum(this.talks);
+          return listSum(this.talks.map((v, i) => v * i)) / (listSum(this.talks) + 0.01);
       }
       maxTag() {
           return this.talks.reduce(([pi, pv], c, i) => (c > pv ? [i, c] : [pi, pv]), [
@@ -263,10 +263,11 @@ war`.split("\n");
           let tagTypeMultiplier = tag > ISSUES ? -0.1 * (tag - ISSUES) : 1;
           let migration = delta * factor * tagTypeMultiplier * migrationSpeed;
           migration *= Math.min(migration > 0 ? this.pop : that.pop, 1);
+          let scaledMigration = migration / (this.pop + 0.01);
           if (migration > 0)
-              this.has[tagNamed.emigration] += migration / this.pop;
+              this.has[tagNamed.emigration] += scaledMigration;
           else
-              this.has[tagNamed.unemployment] -= migration / this.pop;
+              this.has[tagNamed.unemployment] -= scaledMigration;
           let sizeAdjust = Math.pow((that.pop / (this.pop + 0.1)), 0.5);
           factor *= sizeAdjust;
           let bonus = 0.05 * tagTypeMultiplier;
@@ -294,6 +295,9 @@ war`.split("\n");
           console.assert(tag < 36);
           let change = (this.makes[tag] - this.has[tag]) * dt * 2;
           this.has[tag] += change;
+          if (tag == tagNamed.epidemy) {
+              this.has[tag] -= this.has[tagNamed.medicine] * dt;
+          }
           this.talks[tag] += FR() * 0.1 * dt;
           this.balanceTalks();
           if (FR() < 0.1 * dt) {
@@ -310,13 +314,14 @@ war`.split("\n");
           let growth = dt *
               0.02 *
               this.has[tag] *
-              (0.1 + this.pop) *
               (this.has[tag] < 0 ? negativeTagEffect[tag] : positiveTagEffect[tag]);
-          if (growth < 0)
-              this.grit += dt;
-          if (growth < 0)
+          if (growth < 0) {
+              this.grit += dt * growth * 10;
               growth /= 1 + this.grit * 0.5;
+              this.has[tagsNumber - 1 - R(6)] += growth * FR();
+          }
           this.grit *= 1 - dt * 0.01 * this.pop;
+          growth *= (0.1 + this.pop);
           this.log({
               tag,
               growth,
@@ -355,6 +360,9 @@ war`.split("\n");
       get id() {
           return this.ends[0].id * 1000 + this.ends[1].id;
       }
+      center() {
+          return [(this.ends[0].at[0] + this.ends[1].at[0]) / 2, (this.ends[0].at[1] + this.ends[0].at[1]) / 2];
+      }
   }
 
   const encourageCooldown = 50, tagResearchRate = 400;
@@ -383,8 +391,8 @@ war`.split("\n");
       [
           "Latency",
           0,
-          1000,
-          600,
+          10000,
+          10000,
           (gal) => `Connection speed is increased by ${gal.speedBoost() * 100}%, and by same amount for the each extra expansion`,
       ],
       [
@@ -506,7 +514,7 @@ war`.split("\n");
           return 50 + 50 * this.rd[TRANSPORT];
       }
       speedBoost() {
-          return this.rd[LATENCY] * 0.2;
+          return this.rd[LATENCY] * 0.1;
       }
       rdSpeed() {
           return 1 + this.rd[RDSPEED] * 0.5 + this.exp / 10000;
@@ -584,7 +592,7 @@ war`.split("\n");
           let packets = 1;
           if (route) {
               latency = distances[end.id];
-              let fee = 2 / (1 + latency / 1000);
+              let fee = 5 / (1 + latency / 100);
               if (this.promoted[tag]) {
                   fee /= 2;
                   packets *= 1 + this.promotingBonus();
@@ -700,7 +708,7 @@ war`.split("\n");
           star.income /= 1 + dt;
           let issue = tagsNumber - R(6) - 1;
           if (Math.abs(star.has[issue]) > 3) {
-              let other = this.stars[weightedRandom(this.stars.map((other) => other != star ? 1 / v2Dist(star.at, other.at) : 0))];
+              let other = this.stars[weightedRandom(this.stars.map((other) => other != star ? 1 / (v2Dist(star.at, other.at) + 0.1) : 0))];
               let delta = star.has[issue] - other.has[issue];
               let transfer = delta * FR() * dt;
               //console.log(tagsList[issue], star.name, other.name, transfer);
@@ -713,7 +721,7 @@ war`.split("\n");
               let other = this.stars[R(starsNumber)];
               let delta = Math.min(0.1, star.pop * R(1e3) * 5e-6);
               let path = this.findPath(star, other);
-              if ((R(1e6) / v2Dist(star.at, other.at)) *
+              if ((R(1e6) / (v2Dist(star.at, other.at) + 0.1)) *
                   (path ? 5 : 1) *
                   star.pop *
                   (other.pop > 0 ? 10 : 1) >
@@ -997,7 +1005,6 @@ war`.split("\n");
       }
       function seePage(n) {
           page = n;
-          unselect();
           renderMenuButtons();
           showInfo();
       }
@@ -1033,7 +1040,7 @@ war`.split("\n");
           return b;
       }
       function alert(text, at) {
-          particles.push(new TextParticle(text, at.slice(), 0.5 + text.length / 20));
+          particles.push(new TextParticle(text, at ? at.slice() : [450, 450], 0.5 + text.length / 20));
       }
       calculateHitboxes();
       renderStars();
@@ -1043,7 +1050,7 @@ war`.split("\n");
           mouse.pressed = true;
           selectedTag = -1;
           if (hovered) {
-              if (selected)
+              if (selected == hovered)
                   selected = null;
               else {
                   selected = hovered;
@@ -1059,7 +1066,7 @@ war`.split("\n");
               if (m.shiftKey) {
                   console.log(selectedLink);
               }
-              if (selectedLink) {
+              if (selectedLink == hoveredLink) {
                   selectedLink = null;
               }
               else {
@@ -1077,10 +1084,10 @@ war`.split("\n");
       };
       function linkAffordable() {
           if (gal.entsLeft <= 0) {
-              alert("No Entanglements left (increase in R&D)", selected === null || selected === void 0 ? void 0 : selected.at);
+              alert("No Entanglements left (increase in R&D)", selectedLink === null || selectedLink === void 0 ? void 0 : selectedLink.center());
           }
           else if (gal.cash < gal.linkPrice()) {
-              alert(`Need $${gal.linkPrice()}`, selected === null || selected === void 0 ? void 0 : selected.at);
+              alert(`Need $${gal.linkPrice()}`, selectedLink === null || selectedLink === void 0 ? void 0 : selectedLink.center());
           }
           else
               return true;
@@ -1185,11 +1192,11 @@ war`.split("\n");
               case "l":
                   loadGame(0);
                   break;
-              case "!":
+              case "@":
                   debug = !debug;
                   showInfo();
                   break;
-              case "@":
+              case "!":
                   gal.cash += 1e6;
                   gal.rd = gal.rd.map((v, i) => v + gal.rdActive[i]);
                   gal.rdActive.fill(0);
@@ -1345,7 +1352,11 @@ war`.split("\n");
       }
       function renderFlow() {
           d.clearRect(0, 0, 900, 900);
-          document.getElementById("paused").style.display = paused ? "" : "none";
+          let cl = document.getElementById("paused").classList;
+          if (paused)
+              cl.remove("off");
+          else
+              cl.add("off");
           for (let star of [hovered, highlighted].filter((s) => s)) {
               d.strokeStyle = `hsl(${star.color},100%,80%)`;
               d.strokeRect.apply(d, hitboxes[star.id]);
@@ -1485,7 +1496,6 @@ war`.split("\n");
               case "helpToggle":
               case "helpToggleHeader":
                   let help = document.getElementById("help");
-                  let helpb = document.getElementById("helpToggleHeader");
                   let shown = help.style.display == "block";
                   if (shown) {
                       help.style.display = "none";
@@ -1495,6 +1505,7 @@ war`.split("\n");
                   }
                   break;
               case "seePage":
+                  unselect();
                   seePage(v);
                   break;
               case "save":
@@ -1502,7 +1513,8 @@ war`.split("\n");
               case "load":
                   return loadGame(v);
               case "paused":
-                  paused = false;
+                  paused = !paused;
+                  renderFlow();
                   return;
               case "rdh":
                   gal.rdActive[0]++;

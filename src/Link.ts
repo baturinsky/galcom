@@ -33,4 +33,8 @@ export class Link {
     return this.ends[0].id*1000 + this.ends[1].id;
   }
 
+  center():v2{
+    return [(this.ends[0].at[0] + this.ends[1].at[0])/2, (this.ends[0].at[1] + this.ends[0].at[1])/2]
+  }
+
 }

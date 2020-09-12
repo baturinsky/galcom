@@ -117,7 +117,11 @@
       left: 330px;
       animation: blink 1s infinite;
     }
-    #helpToggleHeader{
+    #paused.off{
+      animation:none;
+      color: #444;
+    }
+      #helpToggleHeader{
       left: 1130px;
     }
     #header {
@@ -192,6 +196,7 @@
     em{
       color:#0f0;
       font-style: normal;
+      pointer-events: none;
     }
     span{
       cursor: pointer;
@@ -211,6 +216,7 @@
     }
   </style>
   <body>
+    <button id="paused">PAUSE</button>
     <canvas id="C"></canvas>
     <canvas id="D"></canvas>
     <div id="tooltip"></div>
@@ -225,12 +231,12 @@
   <li>Link stars with mouse drag.</li>
   <li>You can select an established link by clicking it, or mouse dragging between the systems it connects.</li>
   <li>You get money from data sent through links, and also small profits from population in systems.</li>
+  <li>Bigger latency reduces payments.</li>
   <li>S and L buttons save/load to the first slot. Space pauses/unpauses the game.</li>
   <li>Shift-1 completes all researches instantly. Shift-2 let you see internal system info. Shift-click on star or links dumps it's info in browser log.</li>
 </ul>
 <button id="helpToggle" style="width:200px">OK</button>
     </div>
-    <button id="paused">PAUSED</button>
     <button id="helpToggleHeader">HELP</button>
   </body>
   <script src="bundle.js"></script>

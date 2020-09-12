@@ -168,7 +168,6 @@ export function play(gal: Galaxy) {
 
   function seePage(n: number) {
     page = n;
-    unselect();
     renderMenuButtons();
     showInfo();
   }
@@ -231,7 +230,7 @@ export function play(gal: Galaxy) {
 
   function alert(text: string, at: v2) {
     particles.push(
-      new TextParticle(text, at.slice() as v2, 0.5 + text.length / 20)
+      new TextParticle(text, at?at.slice() as v2:[450,450], 0.5 + text.length / 20)
     );
   }
 
@@ -247,7 +246,7 @@ export function play(gal: Galaxy) {
     mouse.pressed = true;
     selectedTag = -1;
     if (hovered) {
-      if (selected) selected = null;
+      if (selected == hovered) selected = null;
       else {
         selected = hovered;
 
@@ -264,7 +263,7 @@ export function play(gal: Galaxy) {
       if (m.shiftKey) {
         console.log(selectedLink);
       }
-      if (selectedLink) {
+      if (selectedLink == hoveredLink) {
         selectedLink = null;
       } else {
         selectedLink = hoveredLink;
@@ -280,9 +279,9 @@ export function play(gal: Galaxy) {
 
   function linkAffordable() {
     if (gal.entsLeft <= 0) {
-      alert("No Entanglements left (increase in R&D)", selected?.at);
+      alert("No Entanglements left (increase in R&D)", selectedLink?.center());
     } else if (gal.cash < gal.linkPrice()) {
-      alert(`Need $${gal.linkPrice()}`, selected?.at);
+      alert(`Need $${gal.linkPrice()}`, selectedLink?.center());
     } else return true;
     return false;
   }
@@ -395,11 +394,11 @@ export function play(gal: Galaxy) {
       case "l":
         loadGame(0);
         break;
-      case "!":
+      case "@":
         debug = !debug;
         showInfo();
         break;
-      case "@":
+      case "!":
         gal.cash += 1e6;
         gal.rd = gal.rd.map((v, i) => v + gal.rdActive[i]);
         gal.rdActive.fill(0);
@@ -673,7 +672,11 @@ export function play(gal: Galaxy) {
   function renderFlow() {
     d.clearRect(0, 0, 900, 900);
 
-    document.getElementById("paused").style.display = paused ? "" : "none";
+    let cl = document.getElementById("paused").classList
+    if(paused)
+      cl.remove("off");      
+    else
+      cl.add("off")      
 
     for (let star of [hovered, highlighted].filter((s) => s)) {
       d.strokeStyle = `hsl(${star.color},100%,80%)`;
@@ -861,7 +864,6 @@ export function play(gal: Galaxy) {
       case "helpToggle":
       case "helpToggleHeader":
         let help = document.getElementById("help") as HTMLElement;
-        let helpb = document.getElementById("helpToggleHeader") as HTMLElement;
         let shown = help.style.display == "block";
         if (shown) {
           help.style.display = "none";
@@ -870,14 +872,16 @@ export function play(gal: Galaxy) {
         }
         break;
       case "seePage":
-        seePage(v);
+        unselect();
+        seePage(v);        
         break;
       case "save":
         return saveGame(v);
       case "load":
         return loadGame(v);
       case "paused":
-        paused = false;
+        paused = !paused;
+        renderFlow();
         return;
       case "rdh":
         gal.rdActive[0]++;

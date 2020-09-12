@@ -47,8 +47,8 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
   [
     "Latency",
     0,
-    1000,
-    600,
+    10000,
+    10000,
     (gal: Galaxy) =>
       `Connection speed is increased by ${
         gal.speedBoost() * 100
@@ -199,7 +199,7 @@ export class Galaxy {
   }
 
   speedBoost() {
-    return this.rd[LATENCY] * 0.2;
+    return this.rd[LATENCY] * 0.1;
   }
 
   rdSpeed() {
@@ -324,7 +324,7 @@ export class Galaxy {
 
     if (route) {
       latency = distances[end.id];
-      let fee = 2 / (1 + latency / 1000);
+      let fee = 5 / (1 + latency / 100);
 
       if (this.promoted[tag]) {
         fee /= 2;
@@ -468,7 +468,7 @@ export class Galaxy {
       let other = this.stars[
         weightedRandom(
           this.stars.map((other) =>
-            other != star ? 1 / v2Dist(star.at, other.at) : 0
+            other != star ? 1 / (v2Dist(star.at, other.at)+0.1) : 0
           )
         )
       ];
@@ -488,7 +488,7 @@ export class Galaxy {
       let path = this.findPath(star, other);
 
       if (
-        (R(1e6) / v2Dist(star.at, other.at)) *
+        (R(1e6) / (v2Dist(star.at, other.at)+0.1)) *
           (path ? 5 : 1) *
           star.pop *
           (other.pop > 0 ? 10 : 1) >
