@@ -117,6 +117,9 @@
       left: 330px;
       animation: blink 1s infinite;
     }
+    #helpToggleHeader{
+      left: 1130px;
+    }
     #header {
       left: 440px;
       top: 19px;
@@ -201,6 +204,10 @@
       border: solid 1px white;
       padding: 10px;
       text-align: center;
+      display: none;
+    }
+    li{
+      text-align: left;
     }
   </style>
   <body>
@@ -214,9 +221,17 @@
     </div>
     <div id="help">
 <h1><img style="height: 30px; filter: invert()" src="favicon.svg"/>Galactic Communications inc.</h1>      
-<button style="width:200px">OK</button>
+<ul>
+  <li>Link stars with mouse drag.</li>
+  <li>You can select an established link by clicking it, or mouse dragging between the systems it connects.</li>
+  <li>You get money from data sent through links, and also small profits from population in systems.</li>
+  <li>S and L buttons save/load to the first slot. Space pauses/unpauses the game.</li>
+  <li>Shift-1 completes all researches instantly. Shift-2 let you see internal system info. Shift-click on star or links dumps it's info in browser log.</li>
+</ul>
+<button id="helpToggle" style="width:200px">OK</button>
     </div>
     <button id="paused">PAUSED</button>
+    <button id="helpToggleHeader">HELP</button>
   </body>
   <script src="bundle.js"></script>
 </html>

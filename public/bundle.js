@@ -900,7 +900,7 @@ war`.split("\n");
     s+= i*i;
   console.log(s);*/
   function em(s) {
-      return `${s}`.replace(/[0-9]+(\.[0-9]*)?/g, (n) => `<em>${(+n).toLocaleString('en-US', { maximumFractionDigits: 0 })}</em>`);
+      return `${s}`.replace(/[0-9]+(\.[0-9]*)?/g, (n) => `<em>${(+n).toLocaleString("en-US", { maximumFractionDigits: 0 })}</em>`);
   }
   function play(gal) {
       for (let i = 0; i < 30000 && gal.colonized < 3; i++)
@@ -989,7 +989,9 @@ war`.split("\n");
       }
       function renderMenuButtons() {
           menuPanel.innerHTML = ["R&D", "Overview", "Saves"]
-              .map((s, i) => `<button id="seePage:${i}" style="${i == page && !localInfoShown() ? "border-bottom:solid 1px black" : ""}"">${s}</button>`)
+              .map((s, i) => `<button id="seePage:${i}" style="${i == page && !localInfoShown()
+            ? "border-bottom:solid 1px black"
+            : ""}"">${s}</button>`)
               .reverse()
               .join("");
       }
@@ -1217,7 +1219,9 @@ war`.split("\n");
                       text = rdInfo();
                       break;
                   case OVERVIEW:
-                      text += em(`<p>${gal.date().toFixed(1)} AD</p>Money: $${gal.cash | 0}<br/>Entanglements: *${gal.entsLeft}<br/>Overcharge/discounts: ${gal.pricingUsed}/${gal.rd[PRICING]} <br/>Pop: ${gal.pop | 0} BL<br/>Income: $${(gal.income + gal.passiveIncome()) | 0}/s<br/>Sent: ${gal.exp | 0}EB<br/>Flow: ${gal.flow | 0}TB/s`) + `<h4>Top topics</h4>${tagCloud(gal.talks)} <h4>Top systems</h4>${starCloud(gal.stars.map(star => star.pop * 5 / gal.pop), 40)}`;
+                      text +=
+                          em(`<p>${gal.date().toFixed(1)} AD</p>Money: $${gal.cash | 0}<br/>Entanglements: *${gal.entsLeft}<br/>Overcharge/discounts: ${gal.pricingUsed}/${gal.rd[PRICING]} <br/>Pop: ${gal.pop | 0} BL<br/>Income: $${(gal.income + gal.passiveIncome()) | 0}/s<br/>Sent: ${gal.exp | 0}EB<br/>Flow: ${gal.flow | 0}TB/s`) +
+                              `<h4>Top topics</h4>${tagCloud(gal.talks)} <h4>Top systems</h4>${starCloud(gal.stars.map((star) => (star.pop * 5) / gal.pop), 40)}`;
                       break;
                   case SAVES:
                       for (let i = 0; i == 0 || localStorage[`galcom${i - 1}`]; i++) {
@@ -1467,6 +1471,7 @@ war`.split("\n");
       }
       document.onmousedown = (e) => {
           let el = e.target;
+          console.log(e);
           let a = expandId(e);
           let [v, w] = [Number(a[1]), Number(a[2])];
           console.log(a);
@@ -1477,6 +1482,18 @@ war`.split("\n");
               return;
           }
           switch (a[0]) {
+              case "helpToggle":
+              case "helpToggleHeader":
+                  let help = document.getElementById("help");
+                  let helpb = document.getElementById("helpToggleHeader");
+                  let shown = help.style.display == "block";
+                  if (shown) {
+                      help.style.display = "none";
+                  }
+                  else {
+                      help.style.display = "block";
+                  }
+                  break;
               case "seePage":
                   seePage(v);
                   break;

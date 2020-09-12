@@ -23,11 +23,12 @@ for(let i=100;i--;)
   s+= i*i;
 console.log(s);*/
 
-function em(s:string|number){
+function em(s: string | number) {
   return `${s}`.replace(
     /[0-9]+(\.[0-9]*)?/g,
-    (n)=>`<em>${(+n).toLocaleString('en-US', {maximumFractionDigits:0})}</em>`
-  )  
+    (n) =>
+      `<em>${(+n).toLocaleString("en-US", { maximumFractionDigits: 0 })}</em>`
+  );
 }
 
 export function play(gal: Galaxy) {
@@ -147,16 +148,18 @@ export function play(gal: Galaxy) {
     }
   }
 
-  function localInfoShown(){
+  function localInfoShown() {
     return hovered || hoveredLink || selected || selectedLink;
-  } 
+  }
 
   function renderMenuButtons() {
     menuPanel.innerHTML = ["R&D", "Overview", "Saves"]
       .map(
         (s, i) =>
           `<button id="seePage:${i}" style="${
-            i == page && !localInfoShown() ? "border-bottom:solid 1px black" : ""
+            i == page && !localInfoShown()
+              ? "border-bottom:solid 1px black"
+              : ""
           }"">${s}</button>`
       )
       .reverse()
@@ -341,14 +344,14 @@ export function play(gal: Galaxy) {
     if (wasHovered && !hovered) {
       showInfo();
       renderMenuButtons();
-    };
+    }
   };
 
   function saveGame(slot: number) {
     let save = gal.serialise();
     save.packets = particles.filter((p) => p instanceof PacketParticle);
     let json = JSON.stringify(save);
-    json = json.replace(/([0-9]+\.[0-9]+)/g, (n)=>(+n).toPrecision(6))
+    json = json.replace(/([0-9]+\.[0-9]+)/g, (n) => (+n).toPrecision(6));
     localStorage[`galcom${slot}`] = json;
     localStorage[`galcomname${slot}`] = `${new Date()
       .toISOString()
@@ -408,9 +411,13 @@ export function play(gal: Galaxy) {
   let header = document.getElementById("header");
 
   function updateHeader() {
-    header.innerHTML = em(`${gal.date().toFixed(1)}AD Pop:${gal.pop.toFixed(1)}BL Money:$${
-      gal.cash | 0
-    } <span id="rdh:0">Entanglements:*${gal.entsLeft}</span> Sent:${gal.exp|0}EB`);
+    header.innerHTML = em(
+      `${gal.date().toFixed(1)}AD Pop:${gal.pop.toFixed(1)}BL Money:$${
+        gal.cash | 0
+      } <span id="rdh:0">Entanglements:*${gal.entsLeft}</span> Sent:${
+        gal.exp | 0
+      }EB`
+    );
   }
 
   function showInfo() {
@@ -429,15 +436,22 @@ export function play(gal: Galaxy) {
           text = rdInfo();
           break;
         case OVERVIEW:
-          text += em(`<p>${gal.date().toFixed(1)} AD</p>Money: $${
-            gal.cash | 0
-          }<br/>Entanglements: *${gal.entsLeft}<br/>Overcharge/discounts: ${
-            gal.pricingUsed
-          }/${gal.rd[PRICING]} <br/>Pop: ${gal.pop | 0} BL<br/>Income: $${
-            (gal.income + gal.passiveIncome()) | 0
-          }/s<br/>Sent: ${gal.exp | 0}EB<br/>Flow: ${
-            gal.flow | 0
-          }TB/s`) + `<h4>Top topics</h4>${tagCloud(gal.talks)} <h4>Top systems</h4>${starCloud(gal.stars.map(star=>star.pop*5/gal.pop), 40)}`;
+          text +=
+            em(
+              `<p>${gal.date().toFixed(1)} AD</p>Money: $${
+                gal.cash | 0
+              }<br/>Entanglements: *${gal.entsLeft}<br/>Overcharge/discounts: ${
+                gal.pricingUsed
+              }/${gal.rd[PRICING]} <br/>Pop: ${gal.pop | 0} BL<br/>Income: $${
+                (gal.income + gal.passiveIncome()) | 0
+              }/s<br/>Sent: ${gal.exp | 0}EB<br/>Flow: ${gal.flow | 0}TB/s`
+            ) +
+            `<h4>Top topics</h4>${tagCloud(
+              gal.talks
+            )} <h4>Top systems</h4>${starCloud(
+              gal.stars.map((star) => (star.pop * 5) / gal.pop),
+              40
+            )}`;
           break;
         case SAVES:
           for (let i = 0; i == 0 || localStorage[`galcom${i - 1}`]; i++) {
@@ -536,7 +550,11 @@ export function play(gal: Galaxy) {
         ref("star:" + star.id, `<big>${star.name}</big>`, starHsl(star))
       )
       .join(`&lt;${"=".repeat(link.width)}&gt; `)} </h3>
-    <p>${em(`${link.flow | 0}/${gal.linkBandwith(link)}TB/s ${gal.latencyOf(link)|0}ms`)}</p>
+    <p>${em(
+      `${link.flow | 0}/${gal.linkBandwith(link)}TB/s ${
+        gal.latencyOf(link) | 0
+      }ms`
+    )}</p>
     <p><button id="linkup:-1">${
       link.width == 1 ? "Remove" : "Downgrade"
     }</button><button id="linkup:1">Expand</button></p>
@@ -562,7 +580,7 @@ export function play(gal: Galaxy) {
             .join("")
         )
         .join("") +
-      `</div>Grit: ${star.grit.toFixed(1)} Capacity: ${star.capacity|0}`
+      `</div>Grit: ${star.grit.toFixed(1)} Capacity: ${star.capacity | 0}`
     );
   }
 
@@ -665,8 +683,7 @@ export function play(gal: Galaxy) {
     if (hoveredTag >= 0) {
       d.save();
       for (let star of gal.stars) {
-        if(star.pop ==0)
-          continue;
+        if (star.pop == 0) continue;
         d.beginPath();
         d.strokeStyle = tagColor(hoveredTag);
         d.lineWidth = 0.5 + star.pop ** 0.5 / 3;
@@ -726,15 +743,21 @@ export function play(gal: Galaxy) {
     }
     d.restore();
 
-    for(let i=0;i<gal.rdProgress.length;i++){
-      if(gal.rdProgress[i]!=0){
-        d.fillStyle = gal.rdActive[i]?"#ddd":"#777";
-        d.beginPath()
+    for (let i = 0; i < gal.rdProgress.length; i++) {
+      if (gal.rdProgress[i] != 0) {
+        d.fillStyle = gal.rdActive[i] ? "#ddd" : "#777";
+        d.beginPath();
         //d.fillRect(0,i*30,5,gal.rdProgress[i]*30);
-        d.moveTo(10,28 + i*25);        
-        d.arc(10,28 + i*25,7,Math.PI*0.5,Math.PI*(0.5 + 2*gal.rdProgress[i]));
+        d.moveTo(10, 28 + i * 25);
+        d.arc(
+          10,
+          28 + i * 25,
+          7,
+          Math.PI * 0.5,
+          Math.PI * (0.5 + 2 * gal.rdProgress[i])
+        );
         d.closePath();
-        d.fill()
+        d.fill();
       }
     }
 
@@ -824,6 +847,7 @@ export function play(gal: Galaxy) {
 
   document.onmousedown = (e) => {
     let el = e.target as HTMLElement;
+    console.log(e);
     let a = expandId(e);
     let [v, w] = [Number(a[1]), Number(a[2])];
     console.log(a);
@@ -834,6 +858,17 @@ export function play(gal: Galaxy) {
       return;
     }
     switch (a[0]) {
+      case "helpToggle":
+      case "helpToggleHeader":
+        let help = document.getElementById("help") as HTMLElement;
+        let helpb = document.getElementById("helpToggleHeader") as HTMLElement;
+        let shown = help.style.display == "block";
+        if (shown) {
+          help.style.display = "none";
+        } else {
+          help.style.display = "block";
+        }
+        break;
       case "seePage":
         seePage(v);
         break;
@@ -914,8 +949,7 @@ export function play(gal: Galaxy) {
         updateTooltip(el, 0);
         break;
       case "rd":
-        if(gal.exp >= gal.researchExpRequired(v))
-        updateTooltip(el, v);
+        if (gal.exp >= gal.researchExpRequired(v)) updateTooltip(el, v);
         break;
       case "pricing":
         break;
@@ -949,12 +983,12 @@ export function play(gal: Galaxy) {
     if (newRow >= 0) tooltipShown = newRow;
 
     if (el) {
-      let top = Math.max(50,el.offsetTop);
+      let top = Math.max(50, el.offsetTop);
       tooltip.style.cssText = `top:${top}px; opacity:1`;
     }
 
     if (tooltipShown >= 0 && tooltipShown < 100) {
-      tooltip.innerHTML = em((rdConf[tooltipShown][4](gal) as string));
+      tooltip.innerHTML = em(rdConf[tooltipShown][4](gal) as string);
     } else if (tooltipShown >= 100) {
       let tag = tooltipShown - 100;
       switch (tooltipCol) {
@@ -964,9 +998,9 @@ export function play(gal: Galaxy) {
             : `Promote ${tagSpan(tag)}.`;
           break;
         case 2:
-          tooltip.innerHTML = `Invest $${em(gal.investCost(tag))} into ${tagSpan(
-            tag
-          )}.`;
+          tooltip.innerHTML = `Invest $${em(
+            gal.investCost(tag)
+          )} into ${tagSpan(tag)}.`;
           break;
         case 3:
           tooltip.innerHTML = `Encourage interest in ${tagSpan(tag)}`;
