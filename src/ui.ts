@@ -244,7 +244,7 @@ export function play(gal: Galaxy) {
 
   function report(text: string, at: v2) {
     particles.push(
-      new TextParticle(text, at?at.slice() as v2:[450,450], 0.5 + text.length / 20)
+      new TextParticle(text, at?at.slice() as v2:[250,450], 0.5 + text.length / 20)
     );
   }
 
@@ -293,9 +293,9 @@ export function play(gal: Galaxy) {
 
   function linkAffordable() {
     if (gal.entsLeft <= 0) {
-      report("No Entanglements left (increase in R&D)", selectedLink?.center());
+      report("No Entanglements left (increase in R&D)", selected?.at);
     } else if (gal.cash < gal.linkPrice()) {
-      report(`Need $${gal.linkPrice()}`, selectedLink?.center());
+      report(`Need $${gal.linkPrice()}`, selected?.at);
     } else return true;
     return false;
   }

@@ -53,7 +53,7 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
     (gal: Galaxy) =>
       `Connection speed is increased by ${
         gal.speedBoost() * 100
-      }%, and by same amount for the each extra expansion`,
+      }%, and by the same amount for the each extra expansion`,
   ],
   [
     "Broadband",
@@ -108,8 +108,8 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
     (
       gal: Galaxy
     ) => `You have created an algorithm that will learn from messages you transport and improve profits.
-  After sending certain amount of messages of any topic you will start getting 25% more income from such messages. 
-  Also, if you get such bonus for all topics, you will be able to unlock next level of this upgrade. 
+  After sending a certain amount of messages of any topic you will start getting 25% more income from such messages. 
+  Also, if you get such a bonus for all topics, you will be able to unlock the next level of this upgrade. 
   After doing it 5 times, something interesting may happen.
   `,
   ],
@@ -527,11 +527,10 @@ export class Galaxy {
       let path = this.findPath(star, other);
 
       if (
-        (R(1e6) / (v2Dist(star.at, other.at) + 0.1)) *
-          (path ? 5 : 1) *
-          star.pop *
-          (other.pop > 0 ? 10 : 1) >
-        500000
+        (R(1e6) / (v2Dist(star.at, other.at)**0.9 + 0.1)) *
+          (path.route ? 10 : 1) *
+          star.pop >
+        100000
       ) {
         if (other.pop == 0) this.colonized++;
         star.log({ arrived: delta });
