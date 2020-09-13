@@ -6,10 +6,11 @@ import {
   ENCOURAGE,
   RESEARCH,
   PRICING,
+  passiveIncomeRate,
 } from "./Galaxy";
 import { Link } from "./Link";
 import { Star, tagColors, tagsList, tagColor } from "./Star";
-import { v2Dist, v2Dif, v2Norm, v2Add, v2, R } from "./util";
+import { v2Dist, v2Dif, v2Norm, v2Add, v2, R, RSeed } from "./util";
 
 const packetSpeed = 300;
 const RD = 0,
@@ -42,6 +43,7 @@ export function play(gal: Galaxy) {
   class PacketParticle implements Particle {
     tag: number;
     at: v2;
+    weight: number;
     route: number[];
 
     update(dtime: number) {
@@ -63,7 +65,8 @@ export function play(gal: Galaxy) {
 
     render(c: CanvasRenderingContext2D) {
       c.fillStyle = tagColors[this.tag];
-      c.fillRect(this.at[0] - 1, this.at[1], 2, 2);
+      let r = this.weight**0.5;
+      c.fillRect(this.at[0] - r, this.at[1] - r+1, 2*r, 2*r);
     }
   }
 
@@ -128,7 +131,7 @@ export function play(gal: Galaxy) {
     lasttime = 0;
 
   let starsImg = c.getImageData(0, 0, 900, 900);
-  for (let i = 0; i < 10000; i++)
+  for (let i = 0; i < 50000; i++)
     starsImg.data.set(
       [R(155) + 100, R(155) + 100, R(155) + 100, R(70)],
       R(900 * 900) * 4
@@ -349,6 +352,7 @@ export function play(gal: Galaxy) {
   function saveGame(slot: number) {
     let save = gal.serialise();
     save.packets = particles.filter((p) => p instanceof PacketParticle);
+    save.seed = RSeed();
     let json = JSON.stringify(save);
     json = json.replace(/([0-9]+\.[0-9]+)/g, (n) => (+n).toPrecision(6));
     localStorage[`galcom${slot}`] = json;
@@ -366,6 +370,10 @@ export function play(gal: Galaxy) {
     particles = [];
     let stored = localStorage[`galcom${slot}`];
     let save = JSON.parse(stored);
+    if(save.seed){
+      RSeed(save.seed)
+      delete save.seed;
+    }
     let packets = save.packets;
     if (packets) {
       for (let p of packets) {
@@ -410,12 +418,12 @@ export function play(gal: Galaxy) {
   let header = document.getElementById("header");
 
   function updateHeader() {
-    header.innerHTML = em(
-      `${gal.date().toFixed(1)}AD Pop:${gal.pop.toFixed(1)}BL Money:$${
-        gal.cash | 0
-      } <span id="rdh:0">Entanglements:*${gal.entsLeft}</span> Sent:${
+    header.innerHTML = `<em>${gal.date().toFixed(2)}</em>AD ` + em(
+      `Pop:${gal.pop.toFixed(1)}BL <span id="rdh:0">Entanglements:*${gal.entsLeft}</span> Sent:${
         gal.exp | 0
-      }EB`
+      }EB Money:$${
+        gal.cash | 0
+      }`
     );
   }
 
@@ -587,11 +595,11 @@ export function play(gal: Galaxy) {
     return (
       `<button class="close">X</button> <h3><big style="color:${starHsl(
         star
-      )}">${star.name}</big> ${em(
+      )}">${star.name}</big> ${
         star.pop > 0
-          ? `${star.pop.toPrecision(3)}BL $${star.income | 0}/s`
+          ? `<em>${star.pop.toPrecision(3)}</em>BL $${em(star.income + star.pop * passiveIncomeRate)}/s`
           : `Uninhabited`
-      )}</h3>` +
+      }</h3>` +
       (star.pricing == 0 && gal.pricingLeft == 0
         ? ``
         : `<p><button ${
@@ -805,12 +813,13 @@ export function play(gal: Galaxy) {
     c.restore();
   }
 
-  function sendPacket(start: number, tag: number, route: number[]) {
+  function sendPacket(start: number, tag: number, weight:number, route: number[]) {
     //let route = gal.findPath(gal.stars[start], gal.stars[end]);
     let p = new PacketParticle();
     p.route = route;
     p.tag = tag;
     p.at = gal.stars[start].at.slice() as v2;
+    p.weight = weight;
     particles.push(p);
     p.update(R(1000) / 10000);
   }
@@ -826,7 +835,7 @@ export function play(gal: Galaxy) {
 
       for (let i = 0; i < gal.packets.length && i < 3; i++) {
         let p = gal.packets[i];
-        sendPacket(p[0], p[2], p[3]);
+        sendPacket(p[0], p[2], p[3], p[4]);
       }
 
       updateHeader();
@@ -850,10 +859,8 @@ export function play(gal: Galaxy) {
 
   document.onmousedown = (e) => {
     let el = e.target as HTMLElement;
-    console.log(e);
     let a = expandId(e);
     let [v, w] = [Number(a[1]), Number(a[2])];
-    console.log(a);
     if (el.classList.contains("close")) {
       selectedLink = selected = null;
       showInfo();

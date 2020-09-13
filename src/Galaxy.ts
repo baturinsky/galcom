@@ -11,8 +11,8 @@ import {
 import { Star, starsNumber, tagsList, tagsNumber } from "./Star";
 import { Link } from "./Link";
 
-const encourageCooldown = 50,
-  tagResearchRate = 400;
+export const encourageCooldown = 50,
+  tagResearchRate = 400, passiveIncomeRate = 0.5;
 
 export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
   [
@@ -42,7 +42,7 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
     (gal: Galaxy) =>
       `R&D speed is ${
         (gal.rdSpeed() * 100) | 0
-      }%. You get 50% for each repeat of this research, and also 1% for each 100EB sent.`,
+      }%. You get 50% for each repeat of this research, and also 1% for each 200EB sent.`,
   ],
   [
     "Latency",
@@ -68,7 +68,7 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
     "Flexible pricing",
     0,
     10000,
-    10000,
+    5000,
     (
       gal: Galaxy
     ) => `Ability to discount or overcharge your service in specific system.
@@ -83,8 +83,8 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
   [
     "Search Engine",
     0,
-    20000,
-    20000,
+    10000,
+    10000,
     (gal: Galaxy) => `You can promote up to ${gal.rd[PROMOTE]} topics. 
   That reduces profit per message by half for that topic, but increases messages by ${
     gal.promotingBonus() * 100
@@ -93,7 +93,7 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
   [
     "Investments",
     0,
-    200000,
+    100000,
     100000,
     (gal: Galaxy) =>
       `You can invest into any topic up to ${gal.rd[INVEST]} times, permanently increasing profit from related messages by 25%.`,
@@ -102,8 +102,8 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
   [
     "Targeted Adverts",
     0,
-    100000,
-    100000,
+    50000,
+    50000,
     (
       gal: Galaxy
     ) => `You have created an algorithm that will learn from messages you transport and improve profits.
@@ -116,8 +116,8 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
   [
     "Social Engineering",
     0,
-    100000,
-    100000,
+    30000,
+    10000,
     (gal: Galaxy) => `You have enough knowledge and leverage to 
   make people through galaxy very interested in a topic of your choice. You will need to repeat this research for each such action.
   You can do it up to ${gal.rd[ENCOURAGE]} times`,
@@ -154,7 +154,7 @@ export class Galaxy {
 
   stars: Star[] = [];
   links: Link[] = [];
-  packets: [number, number, number, number[]][] = [];
+  packets: [number, number, number, number, number[]][] = [];
   time = 0;
   colonized = 1;
 
@@ -203,7 +203,7 @@ export class Galaxy {
   }
 
   rdSpeed() {
-    return 1 + this.rd[RDSPEED] * 0.5 + this.exp / 10000;
+    return 1 + this.rd[RDSPEED] * 0.5 + this.exp / 20000;
   }
 
   date() {
@@ -227,9 +227,12 @@ export class Galaxy {
   }
 
   latencyOf(link: Link) {
-    return this.latency[link.ends[0].id].find(
+    let data = this.latency[link.ends[0].id].find(
       (a) => a[0] == link.ends[1].id
-    )[1];
+    );
+    if(!data)
+      return 1000;
+    return data[1];
   }
 
   recalculateLatency() {
@@ -319,16 +322,15 @@ export class Galaxy {
     let { route, distances } = this.findPath(start, end);
 
     let latency = 1000;
-    let packets = 1,
-      fee = 2;
+    let weight = 1;
 
     if (route) {
       latency = distances[end.id];
-      let fee = 5 / (1 + latency / 100);
+      let fee = 3 / (1 + latency / 100);
 
       if (this.promoted[tag]) {
         fee /= 2;
-        packets *= 1 + this.promotingBonus();
+        weight *= 1 + this.promotingBonus();
       }
 
       if (this.rd[RESEARCH]) {
@@ -341,38 +343,36 @@ export class Galaxy {
 
       if (end.pricing == 1) {
         fee *= 1 + this.pricingBonus();
-        packets /= 2;
-      } else if (end.pricing == 1) {
+        weight /= 2;
+      } else if (end.pricing == -1) {
         fee /= 2;
-        packets *= 1 + this.pricingBonus();
+        weight *= 1 + this.pricingBonus();
       }
 
-      packets = (packets | 0) + FR() * (packets - (packets | 0));
-
-      end.income += fee * packets;
-      this.cash += fee * packets;
-      this.exp += packets;
-      this.packets.push([start.id, end.id, tag, route]);
+      end.income += fee * weight;
+      this.cash += fee * weight;
+      this.exp += weight;
+      this.packets.push([start.id, end.id, tag, weight, route]);
 
       for (let i = 0; i < route.length - 1; i++) {
         let [a, b] = [this.stars[route[i]], this.stars[route[i + 1]]];
         let link = a.links[b.id];
-        link.flow += packets;
-        link.talks[tag] += 1e-4 * packets;
-        link.talkers[start.id] += 1e-4 * packets;
-        link.talkers[end.id] += 1e-4 * packets;
+        link.flow += weight;
+        link.talks[tag] += 1e-4 * weight;
+        link.talkers[start.id] += 1e-4 * weight;
+        link.talkers[end.id] += 1e-4 * weight;
       }
     }
 
     if (this.rd[RESEARCH] > 0 && this.tagsResearched[tag] < this.rd[RESEARCH]) {
       this.tagsResearched[tag] +=
-        (1 / tagResearchRate / 2 ** (this.rd[RESEARCH] - 1)) * packets;
+        (1 / tagResearchRate / 2 ** (this.rd[RESEARCH] - 1)) * weight;
       if (this.tagsResearched[tag] > this.rd[RESEARCH]) {
         this.tagsResearched[tag] = this.rd[RESEARCH];
       }
     }
 
-    let intencity = 1e-3 * (1500 - latency) * packets;
+    let intencity = 1e-3 * (1500 - latency) * weight;
 
     start.talkers[end.id] += intencity * 1e-4;
     end.talkers[start.id] += intencity * 1e-4;
@@ -381,8 +381,10 @@ export class Galaxy {
     end.interact(start, -intencity, tag);
   }
 
+
+
   passiveIncome() {
-    return this.pop / 2;
+    return this.pop * passiveIncomeRate;
   }
 
   update(dt: number) {
@@ -603,7 +605,7 @@ export class Galaxy {
   }
 
   investCost(tag: number) {
-    return 100000 * (this.invested[tag] + 1);
+    return 50000 * (this.invested[tag] + 1);
   }
 
   canInvest(tag: number) {

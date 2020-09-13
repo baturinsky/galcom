@@ -265,7 +265,7 @@ export class Star {
     //this.makes[tag] += dmakes;
 
     if(tag>=ISSUES)
-      this.grit += flow*0.01;    
+      this.grit += factor*0.01;    
 
     if (logging)
       this.log({
@@ -292,8 +292,9 @@ export class Star {
 
     let change = (this.makes[tag] - this.has[tag]) * dt * 2;
     this.has[tag] += change;
-    if(tag == tagNamed.epidemy){
-      this.has[tag] -= this.has[tagNamed.medicine]*dt;
+    if(tag == tagNamed.epidemy || tag == tagNamed.illness){
+      this.has[tag] -= this.has[tagNamed.medicine]*dt*5;
+      this.talks[tagNamed.medicine] += Math.abs(this.has[tag]*dt*0.02);
     }
 
     this.talks[tag] += FR() * 0.1 * dt;
@@ -326,6 +327,8 @@ export class Star {
     }
 
     this.grit *= 1 - dt*0.01 * this.pop;
+    if(this.grit<0)
+      this.grit = 0;
 
     growth *= (0.1 + this.pop);
 

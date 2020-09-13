@@ -3,8 +3,10 @@ export type v2 = [number, number];
 let seed: number;
 export let R = (n) => (seed = (seed * 69069 + 1) % 2 ** 31) % n;
 export let FR = () => R(1e9)/1e9;
-export function RSeed(n: number) {
-  seed = n;
+export function RSeed(n: number = null): number {
+  if(n!=null)
+    seed = n;
+  return seed;
 }
 
 export function v2Len(v: v2) {
