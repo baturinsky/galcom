@@ -24,6 +24,15 @@ for(let i=100;i--;)
   s+= i*i;
 console.log(s);*/
 
+const quotes = [
+  `In space everyone will hear your scream.`,
+  `Data must flow.`,
+  `Where no byte was sent before.`,
+  `Streaming things you people wouldn't believe.`
+]
+
+document.getElementById("quote").innerText = quotes[(Math.random()*4)|0]
+
 function em(s: string | number) {
   return `${s}`.replace(
     /[0-9]+(\.[0-9]*)?/g,
@@ -117,6 +126,8 @@ export function play(gal: Galaxy) {
   }
 
   let mouse = { at: [0, 0] as v2, pressed: false };
+
+  let help = document.getElementById("help") as HTMLElement;
 
   let C = document.getElementById("C") as HTMLCanvasElement;
   let D = document.getElementById("D") as HTMLCanvasElement;
@@ -231,7 +242,7 @@ export function play(gal: Galaxy) {
     return b;
   }
 
-  function alert(text: string, at: v2) {
+  function report(text: string, at: v2) {
     particles.push(
       new TextParticle(text, at?at.slice() as v2:[450,450], 0.5 + text.length / 20)
     );
@@ -282,9 +293,9 @@ export function play(gal: Galaxy) {
 
   function linkAffordable() {
     if (gal.entsLeft <= 0) {
-      alert("No Entanglements left (increase in R&D)", selectedLink?.center());
+      report("No Entanglements left (increase in R&D)", selectedLink?.center());
     } else if (gal.cash < gal.linkPrice()) {
-      alert(`Need $${gal.linkPrice()}`, selectedLink?.center());
+      report(`Need $${gal.linkPrice()}`, selectedLink?.center());
     } else return true;
     return false;
   }
@@ -295,11 +306,13 @@ export function play(gal: Galaxy) {
       selectedLink = selected.links[hovered.id];
       if (!selectedLink) {
         if (!gal.inRange(selected, hovered)) {
-          alert("out of range", selected.at);
+          report("out of range", selected.at);
         } else if (linkAffordable()) {
+          if(gal.ai)
+            return;
           gal.payForLink();
           gal.addLink(selected, hovered);
-          alert(`-*1 -$${gal.linkPrice()}`, selected.at);
+          report(`-*1 -$${gal.linkPrice()}`, selected.at);
           renderStars();
         }
       }
@@ -362,7 +375,7 @@ export function play(gal: Galaxy) {
       .replace("T", " ")}<br/>${gal.date().toFixed(1)} AD $${gal.cash | 0} *${
       gal.entsLeft
     }`;
-    alert("SAVED", [450, 450]);
+    report("SAVED", [450, 450]);
     showInfo();
   }
 
@@ -385,7 +398,8 @@ export function play(gal: Galaxy) {
     //delete save.packets;
     gal.deserialise(save);
     paused = false;
-    alert("LOADED", [450, 450]);
+    help.style.display = "none";
+    report("LOADED", [450, 450]);
     calculateHitboxes();
     renderStars();
   }
@@ -830,7 +844,7 @@ export function play(gal: Galaxy) {
 
     particles = particles.filter((p) => p.update(dtime));
 
-    if (!paused && !document.hidden) {
+    if (!paused && !document.hidden && !helpShown()) {
       if (gal.update(dtime)) renderStars();
 
       for (let i = 0; i < gal.packets.length && i < 3; i++) {
@@ -857,6 +871,10 @@ export function play(gal: Galaxy) {
     return id.split(":");
   }
 
+  function helpShown(){
+    return help.style.display != "none";
+  }
+
   document.onmousedown = (e) => {
     let el = e.target as HTMLElement;
     let a = expandId(e);
@@ -867,12 +885,14 @@ export function play(gal: Galaxy) {
       renderMenuButtons();
       return;
     }
+    
+    if(gal.ai && [`rd`,`rdh`,`rdx`,`linkup`,`pricing`,`tagControl`].includes(a[0]))
+      return;
+
     switch (a[0]) {
       case "helpToggle":
       case "helpToggleHeader":
-        let help = document.getElementById("help") as HTMLElement;
-        let shown = help.style.display == "block";
-        if (shown) {
+        if (helpShown()) {
           help.style.display = "none";
         } else {
           help.style.display = "block";

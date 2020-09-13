@@ -209,10 +209,23 @@
       border: solid 1px white;
       padding: 10px;
       text-align: center;
-      display: none;
+      display: block;
     }
     li{
       text-align: left;
+    }
+    #quote{
+      text-align: right;
+      font-style: italic;
+    }
+    #over{
+      width: 80%;
+      height: 100%;
+      font-size: 30pt;
+      padding:100px;
+      text-align: center;
+      background:rgba(0,0,0,0.7);
+      display: none;
     }
   </style>
   <body>
@@ -227,6 +240,7 @@
     </div>
     <div id="help">
 <h1><img style="height: 30px; filter: invert()" src="favicon.svg"/>Galactic Communications inc.</h1>      
+<div id="quote"></div>
 <ul>
   <li>Link stars with mouse drag.</li>
   <li>You can select an established link by clicking it, or mouse dragging between the systems it connects.</li>
@@ -238,6 +252,8 @@
 <button id="helpToggle" style="width:200px">OK</button>
     </div>
     <button id="helpToggleHeader">HELP</button>
+    <div id="over" onclick="over.outerHTML=''">Congratulations! Our targeted adverts algorithm now is so smart, it can do your job!<br/>
+      And it will. Happy retirement and GAME OVER.</div>
   </body>
   <script src="bundle.js"></script>
 </html>

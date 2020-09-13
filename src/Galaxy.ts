@@ -12,7 +12,8 @@ import { Star, starsNumber, tagsList, tagsNumber } from "./Star";
 import { Link } from "./Link";
 
 export const encourageCooldown = 50,
-  tagResearchRate = 400, passiveIncomeRate = 0.5;
+  tagResearchRate = 400,
+  passiveIncomeRate = 0.5;
 
 export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
   [
@@ -85,7 +86,7 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
     0,
     10000,
     10000,
-    (gal: Galaxy) => `You can promote up to ${gal.rd[PROMOTE]} topics. 
+    (gal: Galaxy) => `You can <em>P</em>romote up to ${gal.rd[PROMOTE]} topics. 
   That reduces profit per message by half for that topic, but increases messages by ${
     gal.promotingBonus() * 100
   }%`,
@@ -96,7 +97,7 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
     100000,
     100000,
     (gal: Galaxy) =>
-      `You can invest into any topic up to ${gal.rd[INVEST]} times, permanently increasing profit from related messages by 25%.`,
+      `You can <em>I</em>nvest into any topic up to ${gal.rd[INVEST]} times, permanently increasing profit from related messages by 25%.`,
   ],
 
   [
@@ -119,7 +120,7 @@ export const rdConf: [string, number, number, number, (Galaxy) => string][] = [
     30000,
     10000,
     (gal: Galaxy) => `You have enough knowledge and leverage to 
-  make people through galaxy very interested in a topic of your choice. You will need to repeat this research for each such action.
+  <em>E</em>ncourage people through galaxy very interested in a topic of your choice. You will need to repeat this research for each such action.
   You can do it up to ${gal.rd[ENCOURAGE]} times`,
   ],
 ];
@@ -157,6 +158,8 @@ export class Galaxy {
   packets: [number, number, number, number, number[]][] = [];
   time = 0;
   colonized = 1;
+
+  ai = false;
 
   cash = 1000;
   entsUsed = 0;
@@ -230,8 +233,7 @@ export class Galaxy {
     let data = this.latency[link.ends[0].id].find(
       (a) => a[0] == link.ends[1].id
     );
-    if(!data)
-      return 1000;
+    if (!data) return 1000;
     return data[1];
   }
 
@@ -381,8 +383,6 @@ export class Galaxy {
     end.interact(start, -intencity, tag);
   }
 
-
-
   passiveIncome() {
     return this.pop * passiveIncomeRate;
   }
@@ -455,8 +455,45 @@ export class Galaxy {
         tagsNumber - R(6) - 1,
         R(50) ** 2,
       ];
-      console.log(`Unleashing ${severity} of ${tagsList[issue]} on ${star.name}`);
+      console.log(
+        `Unleashing ${severity} of ${tagsList[issue]} on ${star.name}`
+      );
       star.has[issue] = severity;
+    }
+
+    if (this.ai) {
+      if (this.cash < 10000) {
+        this.rdActive.fill(0);
+      } else if (this.cash > 100000) {
+        if(FR()<dt/10){
+          let res = R(this.rd.length - 1) + 1;
+          if (this.rdFullCost(res) < this.cash) this.rdActive[res] = 1;
+        }
+
+        if (this.entsLeft < 10) {
+          this.rdActive[0] = 10;
+        } else {
+
+          let link = this.links[R(this.links.length)];
+
+          if (this.overflow(link) > 0 && this.entsLeft) {
+            this.payForLink();
+            link.width++;
+          }
+
+            let star1 = this.stars[R(starsNumber)];
+          let star2 = this.stars[R(starsNumber)];
+          if(star1 != star2 && !this.findPath(star1, star2).route && this.inRange(star1, star2)){
+            this.payForLink();
+            this.addLink(star1, star2);
+          }
+        }
+      }
+    } else {
+      if(this.rd[RESEARCH]>=5){
+        document.getElementById("over").style.display="block";
+        this.ai = true;
+      }
     }
 
     return secondPassed;
@@ -470,7 +507,7 @@ export class Galaxy {
       let other = this.stars[
         weightedRandom(
           this.stars.map((other) =>
-            other != star ? 1 / (v2Dist(star.at, other.at)+0.1) : 0
+            other != star ? 1 / (v2Dist(star.at, other.at) + 0.1) : 0
           )
         )
       ];
@@ -490,7 +527,7 @@ export class Galaxy {
       let path = this.findPath(star, other);
 
       if (
-        (R(1e6) / (v2Dist(star.at, other.at)+0.1)) *
+        (R(1e6) / (v2Dist(star.at, other.at) + 0.1)) *
           (path ? 5 : 1) *
           star.pop *
           (other.pop > 0 ? 10 : 1) >
